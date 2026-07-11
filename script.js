@@ -155,6 +155,20 @@
     });
   });
 
+  /* Real email delivery via FormSubmit (free, no backend needed).
+     Submissions are emailed to the address below. The very FIRST submission
+     triggers a one-time activation email from formsubmit.co — open it and
+     click "Activate" once, and every message after that lands in your inbox. */
+  var DELIVERY_EMAIL = "chongderrick15@gmail.com";
+  var ENDPOINT = "https://formsubmit.co/ajax/" + DELIVERY_EMAIL;
+
+  function mailtoFallback(name, email, message) {
+    var subject = encodeURIComponent("Portfolio contact from " + name);
+    var body = encodeURIComponent(message + "\n\n— " + name + " (" + email + ")");
+    window.location.href =
+      "mailto:" + DELIVERY_EMAIL + "?subject=" + subject + "&body=" + body;
+  }
+
   form.addEventListener("submit", function (e) {
     e.preventDefault();
 
@@ -173,25 +187,43 @@
       return;
     }
 
-    /* NOTE — hooking up real delivery:
-       This is a static site, so there's no server to receive the form.
-       The easiest options (no backend code required):
-         1. Formspree — set form action="https://formspree.io/f/YOUR_ID" method="POST"
-            and remove this JS submit interception (keep validation).
-         2. Netlify Forms — add a `netlify` attribute to the <form> tag if you
-            deploy on Netlify.
-       Until then, we fall back to opening the visitor's email client: */
     var name = fields.name.input.value.trim();
     var email = fields.email.input.value.trim();
     var message = fields.message.input.value.trim();
 
-    var subject = encodeURIComponent("Portfolio contact from " + name);
-    var body = encodeURIComponent(message + "\n\n— " + name + " (" + email + ")");
-    window.location.href =
-      "mailto:chongderrick15@gmail.com?subject=" + subject + "&body=" + body;
+    var submitBtn = form.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+    statusEl.textContent = "Sending…";
 
-    statusEl.textContent = "Thanks, " + name + "! Your email app should open — just hit send.";
-    statusEl.classList.add("is-success");
-    form.reset();
+    fetch(ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Accept": "application/json" },
+      body: JSON.stringify({
+        name: name,
+        email: email,
+        message: message,
+        _subject: "Portfolio contact from " + name,
+        _replyto: email,
+        _template: "table"
+      })
+    })
+      .then(function (res) {
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        return res.json();
+      })
+      .then(function () {
+        statusEl.textContent = "Thanks, " + name + "! Your message has been sent — I'll get back to you soon.";
+        statusEl.classList.add("is-success");
+        form.reset();
+      })
+      .catch(function () {
+        // Network blocked or service unreachable — fall back to the visitor's email app
+        mailtoFallback(name, email, message);
+        statusEl.textContent = "Direct send didn't work, so your email app should open — just hit send.";
+        statusEl.classList.add("is-success");
+      })
+      .then(function () {
+        submitBtn.disabled = false;
+      });
   });
 })();
