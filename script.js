@@ -159,8 +159,9 @@
      Submissions are emailed to the address below. The very FIRST submission
      triggers a one-time activation email from formsubmit.co — open it and
      click "Activate" once, and every message after that lands in your inbox. */
-  var DELIVERY_EMAIL = "chongderrick15@gmail.com";
-  var ENDPOINT = "https://formsubmit.co/ajax/" + DELIVERY_EMAIL;
+  var DELIVERY_EMAIL = "chongderrick15@gmail.com"; // used only for the mailto fallback
+  // FormSubmit alias for chongderrick15@gmail.com — hides the address from bots
+  var ENDPOINT = "https://formsubmit.co/ajax/fd07901c9310cfbd54dfbaeb7cf6c4c6";
 
   function mailtoFallback(name, email, message) {
     var subject = encodeURIComponent("Portfolio contact from " + name);
